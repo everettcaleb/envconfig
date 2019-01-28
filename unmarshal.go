@@ -1,3 +1,5 @@
+// Package envconfig provides a function called Unmarshal that allows you to dump
+// environment variable values into a structure using struct tags
 package envconfig
 
 import (
