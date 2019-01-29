@@ -3,6 +3,15 @@
 version: 2
 jobs:
   build:
+    environment:
+      CC_TEST_REPORTER_ID: 3757054c4d98a46b4c1b7f6eb144d0ab2169b27b4b2c14fbc8ecd5d678136d9a
+    plugins:
+      gofmt:
+        enabled: true
+      golint:
+        enabled: true
+      govet:
+        enabled: true
     docker:
       # specify the version
       - image: circleci/golang:1.11
@@ -16,5 +25,13 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            # download test reporter as a static binary
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
       - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run: ./cc-test-reporter before-build
+      - run: go test -v -coverprofile=c.out ./...
+      - run: ./cc-test-reporter after-build
