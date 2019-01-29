@@ -2,7 +2,10 @@
 Package envconfig provides a function called Unmarshal that allows you to dump
 environment variable values into a structure using struct tags
 
-TODO: Add badges here
+[![CircleCI](https://circleci.com/gh/everettcaleb/envconfig.svg?style=svg)](https://circleci.com/gh/everettcaleb/envconfig)
+[![GoDoc](https://godoc.org/github.com/everettcaleb/envconfig?status.svg)](https://godoc.org/github.com/everettcaleb/envconfig)
+[![Maintainability](https://api.codeclimate.com/v1/badges/adbe118b5dbe9289390e/maintainability)](https://codeclimate.com/github/everettcaleb/envconfig/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/adbe118b5dbe9289390e/test_coverage)](https://codeclimate.com/github/everettcaleb/envconfig/test_coverage)
 
 ## Installing
 You can install the package using the `go get` command:

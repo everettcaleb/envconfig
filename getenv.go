@@ -78,8 +78,28 @@ func getFieldTagBool(f *reflect.StructField, tag string, defaultValue bool) (boo
 	return defaultValue, nil
 }
 
+// bitsOf gets the number of bits of the reflected variable kind
+func bitsOf(k reflect.Kind) int {
+	switch k {
+	case reflect.Int8, reflect.Uint8:
+		return 8
+	case reflect.Int16, reflect.Uint16:
+		return 16
+	case reflect.Float32, reflect.Int, reflect.Int32, reflect.Uint, reflect.Uint32:
+		return 32
+	case reflect.Float64, reflect.Int64, reflect.Uint64:
+		return 64
+	default:
+		return 0
+	}
+}
+
+// getEnvAndSet gets an environment variable by name and assigns it to the field belonging to value "obj"
+// First return value is true if the field was set, false otherwise
+// Second return value is an error for if something went wrong (invalid format for parsing, etc)
 func getEnvAndSet(obj *reflect.Value, f *reflect.StructField, fieldIndex int, envName string) (bool, error) {
-	switch f.Type.Kind() {
+	k := f.Type.Kind()
+	switch k {
 	case reflect.Bool:
 		v, isSet, err := getEnvBool(envName)
 		if isSet {
@@ -87,50 +107,15 @@ func getEnvAndSet(obj *reflect.Value, f *reflect.StructField, fieldIndex int, en
 		}
 		return isSet, err
 
-	case reflect.Float32:
-		v, isSet, err := getEnvFloat(envName, 32)
+	case reflect.Float32, reflect.Float64:
+		v, isSet, err := getEnvFloat(envName, bitsOf(k))
 		if isSet {
 			obj.Field(fieldIndex).SetFloat(v)
 		}
 		return isSet, err
 
-	case reflect.Float64:
-		v, isSet, err := getEnvFloat(envName, 64)
-		if isSet {
-			obj.Field(fieldIndex).SetFloat(v)
-		}
-		return isSet, err
-
-	case reflect.Int:
-		v, isSet, err := getEnvInt(envName, 10, 32)
-		if isSet {
-			obj.Field(fieldIndex).SetInt(v)
-		}
-		return isSet, err
-
-	case reflect.Int8:
-		v, isSet, err := getEnvInt(envName, 10, 8)
-		if isSet {
-			obj.Field(fieldIndex).SetInt(v)
-		}
-		return isSet, err
-
-	case reflect.Int16:
-		v, isSet, err := getEnvInt(envName, 10, 16)
-		if isSet {
-			obj.Field(fieldIndex).SetInt(v)
-		}
-		return isSet, err
-
-	case reflect.Int32:
-		v, isSet, err := getEnvInt(envName, 10, 32)
-		if isSet {
-			obj.Field(fieldIndex).SetInt(v)
-		}
-		return isSet, err
-
-	case reflect.Int64:
-		v, isSet, err := getEnvInt(envName, 10, 64)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v, isSet, err := getEnvInt(envName, 10, bitsOf(k))
 		if isSet {
 			obj.Field(fieldIndex).SetInt(v)
 		}
@@ -143,43 +128,12 @@ func getEnvAndSet(obj *reflect.Value, f *reflect.StructField, fieldIndex int, en
 		}
 		return isSet, nil
 
-	case reflect.Uint:
-		v, isSet, err := getEnvUint(envName, 10, 32)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v, isSet, err := getEnvUint(envName, 10, bitsOf(k))
 		if isSet {
 			obj.Field(fieldIndex).SetUint(v)
 		}
 		return isSet, err
-
-	case reflect.Uint8:
-		v, isSet, err := getEnvUint(envName, 10, 8)
-		if isSet {
-			obj.Field(fieldIndex).SetUint(v)
-		}
-		return isSet, err
-
-	case reflect.Uint16:
-		v, isSet, err := getEnvUint(envName, 10, 16)
-		if isSet {
-			obj.Field(fieldIndex).SetUint(v)
-		}
-		return isSet, err
-
-	case reflect.Uint32:
-		v, isSet, err := getEnvUint(envName, 10, 32)
-		if isSet {
-			obj.Field(fieldIndex).SetUint(v)
-		}
-		return isSet, err
-
-	case reflect.Uint64:
-		v, isSet, err := getEnvUint(envName, 10, 64)
-		if isSet {
-			obj.Field(fieldIndex).SetUint(v)
-		}
-		return isSet, err
-
-	case reflect.Array, reflect.Ptr, reflect.Slice, reflect.Struct:
-		return false, fmt.Errorf("todo, currently unsupported but I definitely want this to support arrays, pointers, slices, and structs in the future")
 
 	default:
 		return false, fmt.Errorf("invalid kind")
