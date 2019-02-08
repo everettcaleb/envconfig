@@ -85,9 +85,9 @@ func bitsOf(k reflect.Kind) int {
 		return 8
 	case reflect.Int16, reflect.Uint16:
 		return 16
-	case reflect.Float32, reflect.Int, reflect.Int32, reflect.Uint, reflect.Uint32:
+	case reflect.Float32, reflect.Int32, reflect.Uint32:
 		return 32
-	case reflect.Float64, reflect.Int64, reflect.Uint64:
+	case reflect.Float64, reflect.Int, reflect.Int64, reflect.Uint, reflect.Uint64:
 		return 64
 	default:
 		return 0
