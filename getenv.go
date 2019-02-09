@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 var env = os.Getenv
@@ -15,6 +16,15 @@ func setStringFromEnv(v reflect.Value, name string) bool {
 		return false
 	}
 	v.SetString(s)
+	return true
+}
+
+func setStringSliceFromEnv(v reflect.Value, name string) bool {
+	s := env(name)
+	if len(s) == 0 {
+		return false
+	}
+	v.Set(reflect.ValueOf(strings.Split(s, ":")))
 	return true
 }
 
@@ -80,17 +90,6 @@ func setBoolFromEnv(v reflect.Value, name string) (bool, error) {
 func setValueFromEnv(v reflect.Value, name string) (bool, error) {
 	k := v.Kind()
 
-	// Handle pointers so that we can use the same type code below for underlying values
-	if k == reflect.Ptr {
-		if v.IsNil() {
-			return false, fmt.Errorf("Cannot fill a nil pointer using an environment variable")
-		}
-
-		// We're just going to reset these here so the code below works the same way
-		v = v.Elem()
-		k = v.Kind()
-	}
-
 	switch k {
 	case reflect.Bool:
 		return setBoolFromEnv(v, name)
@@ -101,8 +100,20 @@ func setValueFromEnv(v reflect.Value, name string) (bool, error) {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return setIntFromEnv(v, name)
 
+	case reflect.Ptr:
+		return false, fmt.Errorf("invalid kind, pointer-to-pointer is not supported and single pointer is resolved by unmarshalStructValue")
+
+	case reflect.Slice:
+		if v.Type().Elem().Kind() == reflect.String {
+			return setStringSliceFromEnv(v, name), nil
+		}
+		return false, fmt.Errorf("invalid kind, for slices only string slices are currently supported")
+
 	case reflect.String:
 		return setStringFromEnv(v, name), nil
+
+	case reflect.Struct:
+		return false, fmt.Errorf("invalid kind, struct must be processed by unmarshalStructValue")
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return setUintFromEnv(v, name)

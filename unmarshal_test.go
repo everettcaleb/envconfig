@@ -5,25 +5,36 @@ import (
 	"testing"
 )
 
-type testStruct struct {
-	BoolField    bool    `env:"BOOL_FIELD"`
-	Float32Field float32 `env:"FLOAT_FIELD"`
-	Float64Field float64 `env:"FLOAT_FIELD"`
-	IntField     int     `env:"INT_FIELD"`
-	Int8Field    int     `env:"INT_FIELD"`
-	Int16Field   int     `env:"INT_FIELD"`
-	Int32Field   int     `env:"INT_FIELD"`
-	Int64Field   int     `env:"INT_FIELD"`
-	StringField  string  `env:"STRING_FIELD"`
-	UintField    uint    `env:"INT_FIELD"`
-	Uint8Field   uint    `env:"INT_FIELD"`
-	Uint16Field  uint    `env:"INT_FIELD"`
-	Uint32Field  uint    `env:"INT_FIELD"`
-	Uint64Field  uint    `env:"INT_FIELD"`
+type customIntType int
 
-	NotExistField string `env:"NOT_EXISTS"`
-	RequiredField string `env:"STRING_FIELD" required:"true"`
-	UntaggedField string
+type testStruct struct {
+	BoolField      bool          `env:"BOOL_FIELD"`
+	Float32Field   float32       `env:"FLOAT_FIELD"`
+	Float64Field   float64       `env:"FLOAT_FIELD"`
+	IntField       int           `env:"INT_FIELD"`
+	Int8Field      int8          `env:"INT_FIELD"`
+	Int16Field     int16         `env:"INT_FIELD"`
+	Int32Field     int32         `env:"INT_FIELD"`
+	Int64Field     int64         `env:"INT_FIELD"`
+	StringField    string        `env:"STRING_FIELD"`
+	UintField      uint          `env:"INT_FIELD"`
+	Uint8Field     uint8         `env:"INT_FIELD"`
+	Uint16Field    uint16        `env:"INT_FIELD"`
+	Uint32Field    uint32        `env:"INT_FIELD"`
+	Uint64Field    uint64        `env:"INT_FIELD"`
+	CustomIntField customIntType `env:"INT_FIELD"`
+	PointerField   *int          `env:"INT_FIELD"`
+
+	NotExistField         string `env:"NOT_EXISTS"`
+	RequiredField         string `env:"STRING_FIELD" required:"true"`
+	UntaggedField         string
+	taggedUnexportedField string `env:"STRING_FIELD"`
+
+	StructField struct {
+		SubBoolField       bool `env:"BOOL_FIELD" required:"true"`
+		subUnexportedField bool `env:"BOOL_FIELD"`
+	}
+	StringSliceField []string `env:"STRING_SLICE_FIELD"`
 }
 
 type testFailStruct struct {
@@ -31,10 +42,11 @@ type testFailStruct struct {
 }
 
 var mockEnv = map[string]string{
-	"BOOL_FIELD":   "yes",
-	"FLOAT_FIELD":  "3.14",
-	"INT_FIELD":    "42",
-	"STRING_FIELD": "hello, world!",
+	"BOOL_FIELD":         "yes",
+	"FLOAT_FIELD":        "3.14",
+	"INT_FIELD":          "42",
+	"STRING_FIELD":       "hello, world!",
+	"STRING_SLICE_FIELD": "hi:hello:hola",
 }
 
 func getMockEnv(name string) string {
@@ -43,7 +55,10 @@ func getMockEnv(name string) string {
 
 func TestUnmarshal(t *testing.T) {
 	env = getMockEnv
-	s := testStruct{}
+	var i int
+	s := testStruct{
+		PointerField: &i,
+	}
 
 	err := Unmarshal(&s)
 	if err != nil {
@@ -91,6 +106,12 @@ func TestUnmarshal(t *testing.T) {
 	if s.Uint64Field != 42 {
 		t.Fail()
 	}
+	if s.CustomIntField != 42 {
+		t.Fail()
+	}
+	if *s.PointerField != 42 {
+		t.Fail()
+	}
 	if len(s.NotExistField) > 0 {
 		t.Fail()
 	}
@@ -98,6 +119,12 @@ func TestUnmarshal(t *testing.T) {
 		t.Fail()
 	}
 	if len(s.UntaggedField) > 0 {
+		t.Fail()
+	}
+	if !s.StructField.SubBoolField {
+		t.Fail()
+	}
+	if len(s.StringSliceField) != 3 {
 		t.Fail()
 	}
 

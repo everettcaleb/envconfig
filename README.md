@@ -27,15 +27,21 @@ require that a database connection string and Redis host are provided:
     type appSettings struct {
         Port         int    `env:"PORT"`
         DBConnection string `env:"DB_CONNECTION" required:"true"`
-        RedisPort    int    `env:"REDIS_PORT"`
-        RedisHost    string `env:"REDIS_HOST" required:"true"`
+        Redis        redisSettings
+    }
+
+    type redisSettings struct {
+        Port int    `env:"REDIS_PORT"`
+        Host string `env:"REDIS_HOST" required:"true"`
     }
 
     func main() {
         // Initialize with defaults (if zero value is not desired)
         settings := appSettings{
             Port: 80,
-            RedisPort: 6379
+            Redis: redisSettings{
+                Port: 6379,
+            },
         }
 
         // Pull in environment variables
@@ -48,8 +54,8 @@ require that a database connection string and Redis host are provided:
         // Print them out
         fmt.Println("Port:", settings.Port)
         fmt.Println("DB Connection:", settings.DBConnection)
-        fmt.Println("Redis Port:", settings.RedisPort)
-        fmt.Println("Redis Host:", settings.RedisHost)
+        fmt.Println("Redis Port:", settings.Redis.Port)
+        fmt.Println("Redis Host:", settings.Redis.Host)
     }
 
 This example will print out:
@@ -63,18 +69,34 @@ This example will print out:
 Below is documentation for exported functions:
 
 ### `func Unmarshal(i interface{}) error`
-`Unmarshal` dumps environment variable values into a `struct` (pass a `*struct`)
+`Unmarshal` dumps environment variable values into exported fields of a `struct` (pass a `*struct`)
 It will automatically look up environment variables that are named in a struct tag.
 For example, if you tag a field in your struct with ```env:"MY_VAR"``` it will
 be filled with the value of that environment variable. If you would like an error
 to be returned if the field is not set, use the tag ```required:"true"```. For boolean,
-fields, any of the following values are valid (any case): `"true"`, `"false"`, `"yes"`, `"no"`,
-`"t"`, `"f"`, `"y"`, `"n"`, `"1"`, `"0"`. Empty/unset environment variable values will not overwrite
-the struct fields that are already set.
+fields, any of the following values are valid (any case): `"true"/"false"`, `"yes"/"no"`, `"on"/"off"`,
+`"t"/"f"`, `"y"/"n"`, `"1"/"0"`. Empty/unset environment variable values will not overwrite
+the struct fields that are already set. Any pointer fields will be dereferenced once (but are skipped if `nil`).
+Fields of a struct kind are unmarshalled recursively. Slices are supported with ":" separated strings (only string slices are
+supported though)
 
-## TODO
-Currently, `Unmarshal` doesn't support arrays, pointers, slices, or structs. I want to add support for
-this later (slices will be comma separated probably).
+#### Supported Field Types
+Currently, `Unmarshal` supports the following field types:
+
+- `bool`
+- `float32` and `float64`
+- `int`, `int8`, `int16`, `int32`, and `int64`
+- `[]string`
+- `string`
+- `struct`
+- `uint`, `uint8`, `uint16`, `uint32`, and `uint64`
+
+Note: user-defined types that are defined using one of the above built-in
+types are also supported. For example:
+
+    type myCustomInt int
+
+The above is perfectly fine and will work as well.
 
 ## Contributing
 Feel free to contribute by forking and creating a pull request. If you find any issues please
