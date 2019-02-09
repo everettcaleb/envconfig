@@ -47,13 +47,13 @@ func Unmarshal(i interface{}) error {
 		}
 
 		// See if it's marked as required
-		required, err := getFieldTagBool(&f, "required", false)
+		required, err := getStructTagAsBool(&f, "required", false)
 		if err != nil {
 			return err
 		}
 
 		// Let's get the environment variable and try to set it
-		isSet, err := getEnvAndSet(&v, &f, fi, envName)
+		isSet, err := setValueFromEnv(v.Field(fi), envName)
 		if err != nil {
 			return err
 		}
