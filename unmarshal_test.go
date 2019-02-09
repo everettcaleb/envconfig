@@ -28,11 +28,11 @@ type testStruct struct {
 	NotExistField         string `env:"NOT_EXISTS"`
 	RequiredField         string `env:"STRING_FIELD" required:"true"`
 	UntaggedField         string
-	taggedUnexportedField string `env:"STRING_FIELD"`
+	taggedUnexportedField string `env:"NOT_EXISTS" required:"true"`
 
 	StructField struct {
 		SubBoolField       bool `env:"BOOL_FIELD" required:"true"`
-		subUnexportedField bool `env:"BOOL_FIELD"`
+		subUnexportedField bool `env:"NOT_EXISTS" required:"true"`
 	}
 	StringSliceField []string `env:"STRING_SLICE_FIELD"`
 }
